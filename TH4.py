@@ -1,4 +1,7 @@
-import base64, tempfile, runpy, os
+import base64
+import tempfile
+import runpy
+import os
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 
