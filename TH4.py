@@ -20,7 +20,7 @@ def decrypt_and_run(data_b64: str, aes_key: bytes, iv: bytes, xor_key: bytes, mo
             data = unpad(cipher.decrypt(data), AES.block_size)
             data = xor_decrypt(data, xor_key)
 
-    # حفظ الملف وتشغيله كـ .pyc
+    # كتابة البيانات المفكوكة كملف .pyc وتشغيله
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pyc") as f:
         f.write(data)
         temp_path = f.name
@@ -29,5 +29,6 @@ def decrypt_and_run(data_b64: str, aes_key: bytes, iv: bytes, xor_key: bytes, mo
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
 
-    # يمكنك حذف الملف بعد التشغيل:
+    # احذف الملف إذا أردت
+    # import os
     # os.unlink(temp_path)
